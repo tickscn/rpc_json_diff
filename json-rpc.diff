@@ -225,7 +225,7 @@ index 0000000000..fe1c17845d
 +Thanks to [606u](https://github.com/606u) for helping me out with low
 +level process communication code
 diff --git a/src/json.c b/src/json.c
-index 21a6df6785..ed7b7a632e 100644
+index 21a6df6785..374ed1da71 100644
 --- a/src/json.c
 +++ b/src/json.c
 @@ -20,18 +20,27 @@ along with GNU Emacs.  If not, see <https://www.gnu.org/licenses/>.  */
@@ -256,7 +256,7 @@ index 21a6df6785..ed7b7a632e 100644
  #ifdef WINDOWSNT
  # include <windows.h>
  # include "w32common.h"
-@@ -986,6 +995,400 @@ usage: (json-parse-string STRING &rest ARGS) */)
+@@ -986,6 +995,402 @@ usage: (json-parse-string STRING &rest ARGS) */)
    return unbind_to (count, json_to_lisp (object, &conf));
  }
  
@@ -350,6 +350,8 @@ index 21a6df6785..ed7b7a632e 100644
 +      pthread_mutex_init (&state->handle_mx, NULL);
 +      /* TODO: mutex_init could fail */
 +      state->handle = handle;
++      state->done = false;
++      state->error_buffer_read = 0;
 +      SAFE_FREE ();
 +      return make_user_ptr (json_rpc_state_free, state);
 +    }
@@ -553,7 +555,7 @@ index 21a6df6785..ed7b7a632e 100644
 +	  if (!param->done)
 +	    {
 +	      msg[content_length] = '\0';
-+	      param->message = json_loads (msg, JSON_DECODE_ANY, &param->error);
++	      param->message = json_loads (msg, JSON_DECODE_ANY | JSON_ALLOW_NUL, &param->error);
 +	      free (msg);
 +	    }
 +	}
@@ -657,7 +659,7 @@ index 21a6df6785..ed7b7a632e 100644
  struct json_read_buffer_data
  {
    /* Byte position of position to read the next chunk from.  */
-@@ -1138,6 +1541,14 @@ syms_of_json (void)
+@@ -1138,6 +1543,14 @@ syms_of_json (void)
  
    DEFSYM (Qjson_serialize, "json-serialize");
    DEFSYM (Qjson_parse_string, "json-parse-string");
@@ -672,7 +674,7 @@ index 21a6df6785..ed7b7a632e 100644
    Fput (Qjson_serialize, Qpure, Qt);
    Fput (Qjson_serialize, Qside_effect_free, Qt);
    Fput (Qjson_parse_string, Qpure, Qt);
-@@ -1154,5 +1565,12 @@ syms_of_json (void)
+@@ -1154,5 +1567,12 @@ syms_of_json (void)
    defsubr (&Sjson_serialize);
    defsubr (&Sjson_insert);
    defsubr (&Sjson_parse_string);
